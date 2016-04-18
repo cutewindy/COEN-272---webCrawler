@@ -68,7 +68,7 @@ public class CrawlerWorker {
 			
 			
 			Report.save(fileId, title, url, statusCode, numofLinks, numofImages);
-			
+//			System.out.print(this.htmlDocument.body().text());
 			return true;
 		}
 		catch (IOException ioe) {  // not successful in HTTP request
@@ -98,7 +98,9 @@ public class CrawlerWorker {
 		try {
 			String fileName = String.format("%s/%d.html", Main.REPO, fileId);
         	FileWriter fileWriter = new FileWriter(fileName, false);
-        	fileWriter.write(htmlDocument.toString());
+        	fileWriter.write(htmlDocument.select("a").remove().toString());
+
+//        	fileWriter.write(htmlDocument.toString());
         	fileWriter.close();
         	
         } catch (IOException e) {

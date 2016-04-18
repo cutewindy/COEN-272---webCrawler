@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 1 Retrieve a web page from a website
@@ -19,7 +20,7 @@ import java.util.Set;
 public class Crawler {
 	
 	
-	private static final int MAX_PAGE_TO_SEARCH = 10;
+	private static final int MAX_PAGE_TO_SEARCH = 1;
 		
 	private Set<String> pagesVisited = new HashSet<String>();
 	private List<String> pagesToVisisted = new LinkedList<String>();
@@ -43,6 +44,12 @@ public class Crawler {
 			// crawl the page of currURL
 			int fileId = Report.getCurrUrlId();
 			crawlerWorker.crawl(currURL, fileId);
+//			try {
+//				TimeUnit.SECONDS.sleep(3);  // wait 3 second
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			} //
 			System.out.println("pagesVisited.size() = " + this.pagesVisited.size());
 			
 			this.pagesToVisisted.addAll(crawlerWorker.getLinks());
