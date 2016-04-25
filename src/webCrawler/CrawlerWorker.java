@@ -35,18 +35,20 @@ public class CrawlerWorker {
 	 * 2. Collect words after the successful crawl.
 	 * @param nextURL
 	 * @return whether of not the crawl was successful
+	 * @throws Exception 
 	 */
-	public boolean crawl(String url, int fileId) {
+	public boolean crawl(String url, int fileId) throws Exception {
 		try {
-			System.out.println("'" + url + "'");
 			Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);
+			
 			Document htmlDocument = connection.get();
 			this.htmlDocument = htmlDocument;
+			
 			int statusCode = connection.response().statusCode();
 			if (statusCode == 200) {  // 200 is the HTTP OK status code
-				System.out.println("\n**Visiting**\nReceived web page at " + url);
-				generateHtmlFile(url, fileId); 
+				System.out.println("**Visiting**\nReceived web page: " + url);
 			}
+			
 			if (!connection.response().contentType().contains("text/html")) {
 				System.out.println("**Failure**\nRetrieved something other than HTML");
 				return false;
@@ -67,12 +69,31 @@ public class CrawlerWorker {
 			}
 			
 			Elements imagesOnPage = htmlDocument.select("img");
-			int numofImages = imagesOnPage.size();			
+			int numofImages = imagesOnPage.size();	
+			
+			int bodySize = connection.response().bodyAsBytes().length;
+			System.out.println("bodySize" + bodySize);
+			
+			// check duplicate
+			if (PageFilter.contain(title, numofLinks, numofImages, bodySize)) {		
+				return true;
+			}
+			else {
+				PageFilter.save(title, numofLinks, numofImages, bodySize);
+			}
+			
+			// save pages info in report
 			Report.save(fileId, title, url, statusCode, numofLinks, numofImages);
+			
+			// save pages info as html
+			generateHtmlFile(url, fileId); 
 //			System.out.print(this.htmlDocument.body().text());
 			return true;
 		}
 		catch (IOException ioe) {  // not successful in HTTP request
+			ioe.printStackTrace();
+			System.out.println(ioe.getMessage());
+			System.out.println(ioe.getLocalizedMessage());
 			return false;
 		}
 		
@@ -100,7 +121,6 @@ public class CrawlerWorker {
 			String fileName = String.format("%s/%d.html", Main.REPO, fileId);
         	FileWriter fileWriter = new FileWriter(fileName, false);
 //        	fileWriter.write(htmlDocument.select("a").remove().toString());
-
         	fileWriter.write(htmlDocument.toString());
         	fileWriter.close();
         	

@@ -10,12 +10,12 @@ import javax.swing.text.html.HTMLDocument.Iterator;
 
 public class Report {
 	
-	private static int currUrlId = 1;
+	private static int currUrlId = 0;
 //	private static HashMap<Integer, String> map = new HashMap<Integer, String>();
 	 
 	public static int getCurrUrlId() {
 		currUrlId++;
-		return currUrlId - 1;
+		return currUrlId;
 	}
 	
 	public static void save(

@@ -20,10 +20,10 @@ import java.util.concurrent.TimeUnit;
 public class Crawler {
 	
 	
-	private static final int MAX_PAGE_TO_SEARCH = 100;
+	private static final int MAX_PAGE_TO_SEARCH = 1000;
 		
 	private Set<String> pagesVisited = new HashSet<String>();
-	private List<String> pagesToVisisted = new LinkedList<String>();
+	private List<String> pagesToVisit = new LinkedList<String>();
 	
 	
 	/**
@@ -31,19 +31,21 @@ public class Crawler {
 	 * @param url
 	 */
 	public void run(String url) {
-		while (this.pagesVisited.size() < MAX_PAGE_TO_SEARCH) {
+		this.pagesToVisit.add(url);
+		while (this.pagesVisited.size() < MAX_PAGE_TO_SEARCH && this.pagesToVisit.size() > 0) {
 			String currURL;
 			CrawlerWorker crawlerWorker = new CrawlerWorker();
-			if (this.pagesToVisisted.isEmpty()) {
-				currURL = url;
-				this.pagesVisited.add(url);
-			}
-			else {
-				currURL = this.nextURL();
-			}
+			currURL = this.nextURL();
+
 			// crawl the page of currURL
 			int fileId = Report.getCurrUrlId();
-			crawlerWorker.crawl(currURL, fileId);
+			try {
+				System.out.println("\n== Crawling " + currURL + " ==");
+				crawlerWorker.crawl(currURL, fileId);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 //			try {
 //				TimeUnit.SECONDS.sleep(3);  // wait 3 second
 //			} catch (InterruptedException e) {
@@ -52,13 +54,11 @@ public class Crawler {
 //			} //
 			System.out.println("pagesVisited.size() = " + this.pagesVisited.size());
 			
-			this.pagesToVisisted.addAll(crawlerWorker.getLinks());
+			this.pagesToVisit.addAll(crawlerWorker.getLinks());
 		}
 		System.out.println(String.format("**Done** Visited %s web page(s)",
 				this.pagesVisited.size()));
 	}
-	
-	
 	
 	
 	/**
@@ -69,7 +69,7 @@ public class Crawler {
 		String nextURL;
 		// make sure that nextURL has not already been visited
 		do {
-			nextURL = this.pagesToVisisted.remove(0);
+			nextURL = this.pagesToVisit.remove(0);
 		} while (this.pagesVisited.contains(nextURL));
 		this.pagesVisited.add(nextURL);
 		return nextURL;
