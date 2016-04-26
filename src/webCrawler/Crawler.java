@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class Crawler {
 	
 	
-	private static final int MAX_PAGE_TO_SEARCH = 1000;
+	private static final int MAX_PAGE_TO_SEARCH = 10000;
 		
 	private Set<String> pagesVisited = new HashSet<String>();
 	private List<String> pagesToVisit = new LinkedList<String>();

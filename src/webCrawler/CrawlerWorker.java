@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -12,6 +13,9 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import crawlercommons.robots.BaseRobotRules;
+import crawlercommons.robots.SimpleRobotRulesParser;
 
 /**
  * 1. Crawl the page(make an HTTP request and parse the page)
@@ -28,7 +32,6 @@ public class CrawlerWorker {
 			"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
 	
 	private List<String> links = new LinkedList<String>(); // a list of URLs
-	private Document htmlDocument;
 	
 	/**
 	 * 1. makes an HTTP request, checks the response and collects all the links on that page.
@@ -38,56 +41,64 @@ public class CrawlerWorker {
 	 * @throws Exception 
 	 */
 	public boolean crawl(String url, int fileId) throws Exception {
+		if (!isAllowed(url)) { 
+			return false;
+		}
 		try {
-			Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);
-			
-			Document htmlDocument = connection.get();
-			this.htmlDocument = htmlDocument;
-			
-			int statusCode = connection.response().statusCode();
-			if (statusCode == 200) {  // 200 is the HTTP OK status code
-				System.out.println("**Visiting**\nReceived web page: " + url);
-			}
-			
-			if (!connection.response().contentType().contains("text/html")) {
-				System.out.println("**Failure**\nRetrieved something other than HTML");
-				return false;
-			}
+			Connection.Response response = Jsoup.connect(url)
+												.userAgent(USER_AGENT)
+												.timeout(100000)
+												.ignoreHttpErrors(true)
+												.execute();
+			int statusCode = response.statusCode();
+			System.out.println("statusCode: " + statusCode);
+			Document htmlDocument = response.parse();
 			
 			String title = htmlDocument.title();
-			System.out.println("title: " + title);
-			
-			Elements linksOnPage = htmlDocument.select("a[href]");
-			int numofLinks = linksOnPage.size();
-			System.out.println("Found (" + linksOnPage.size() + ") links");
-			// store the links in a private field
-			for (Element link: linksOnPage) {
-				String crawledUrl = link.absUrl("href");
-				if (!crawledUrl.isEmpty()) {
-					this.links.add(crawledUrl);
+			int numofLinks = -1;
+			int numofImages = -1;
+			if (statusCode == 200) {  // 200 is the HTTP OK status code
+				System.out.println("**Visiting**\nReceived web page: " + url);
+				
+				if (!response.contentType().contains("text/html")) {
+					System.out.println("**Failure**\nRetrieved something other than HTML");
+					return false;
 				}
+				
+				
+				System.out.println("title: " + title);
+				
+				Elements linksOnPage = htmlDocument.select("a[href]");
+				numofLinks = linksOnPage.size();
+				System.out.println("Found (" + linksOnPage.size() + ") links");
+				// store the links in a private field
+				for (Element link: linksOnPage) {
+					String crawledUrl = link.absUrl("href");
+					if (!crawledUrl.isEmpty()) {
+						this.links.add(crawledUrl);
+					}
+				}
+				
+				Elements imagesOnPage = htmlDocument.select("img");
+				numofImages = imagesOnPage.size();	
+				
+				int bodySize = response.bodyAsBytes().length;
+				
+				// check duplicate
+				if (PageFilter.contain(title, numofLinks, numofImages, bodySize)) {		
+					return true;
+				}
+				else {
+					PageFilter.save(title, numofLinks, numofImages, bodySize);
+				}
+				
+				// save pages info as html
+				generateHtmlFile(fileId, htmlDocument); 
 			}
 			
-			Elements imagesOnPage = htmlDocument.select("img");
-			int numofImages = imagesOnPage.size();	
-			
-			int bodySize = connection.response().bodyAsBytes().length;
-			System.out.println("bodySize" + bodySize);
-			
-			// check duplicate
-			if (PageFilter.contain(title, numofLinks, numofImages, bodySize)) {		
-				return true;
-			}
-			else {
-				PageFilter.save(title, numofLinks, numofImages, bodySize);
-			}
-			
+
 			// save pages info in report
 			Report.save(fileId, title, url, statusCode, numofLinks, numofImages);
-			
-			// save pages info as html
-			generateHtmlFile(url, fileId); 
-//			System.out.print(this.htmlDocument.body().text());
 			return true;
 		}
 		catch (IOException ioe) {  // not successful in HTTP request
@@ -99,6 +110,35 @@ public class CrawlerWorker {
 		
 	}
 	
+	
+	/**
+	 * use robots.txt to check out whether is allowed to crawl that server 
+	 * @param url
+	 * @return
+	 */
+	public static boolean isAllowed(String url) {
+		try {
+			URL URL = new URL(url);
+			String domain = URL.getHost();
+			String robotsUrl = URL.getProtocol() + "://" + domain + "/robots.txt";
+			Connection.Response response = Jsoup.connect(robotsUrl)
+												.userAgent(USER_AGENT)
+												.timeout(100000)
+												.ignoreHttpErrors(true)
+												.execute();
+			Document robotDocument = response.parse();
+			SimpleRobotRulesParser parser = new SimpleRobotRulesParser();
+			BaseRobotRules rules = parser.parseContent(
+					domain, robotDocument.toString().getBytes("UTF-8"),
+					"text/plain", USER_AGENT);
+//			System.out.println("allowed: " + rules.isAllowed(url));
+			return rules.isAllowed(url);
+		}
+		catch (IOException ioe) {
+			ioe.printStackTrace();
+			return false;
+		}
+	}
 	
 	
 	/**
@@ -116,11 +156,10 @@ public class CrawlerWorker {
 	 * @param url
 	 * @param fileId
 	 */
-	public void generateHtmlFile(String url, int fileId) {
+	public void generateHtmlFile(int fileId, Document htmlDocument) {
 		try {
 			String fileName = String.format("%s/%d.html", Main.REPO, fileId);
         	FileWriter fileWriter = new FileWriter(fileName, false);
-//        	fileWriter.write(htmlDocument.select("a").remove().toString());
         	fileWriter.write(htmlDocument.toString());
         	fileWriter.close();
         	

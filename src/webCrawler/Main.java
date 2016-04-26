@@ -13,8 +13,8 @@ public class Main {
 		Utils.createDir(PROCESSED_REPO);
 		
 		Crawler crawler = new Crawler();
-//		String seed = "https://www.scu.edu/";
-		String seed = "https://www.scu.edu/abc"; // 404 testing
+		String seed = "https://www.scu.edu/";
+//		String seed = "https://www.scu.edu/abc"; // 404 testing
 		System.out.println("Seed: " + seed);
 		System.out.println("\n\n****************************BEGIN****************************");
 		
