@@ -6,7 +6,7 @@ public class Main {
 	public static final String PROCESSED_REPO = "processed_repository";
 
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		// TODO Auto-generated method stub
 		Utils.createDir(REPO);
 		Utils.createFile(REPORT);
@@ -16,11 +16,11 @@ public class Main {
 		String seed = "https://www.scu.edu/";
 //		String seed = "https://www.scu.edu/abc"; // 404 testing
 		System.out.println("Seed: " + seed);
-		System.out.println("\n\n****************************BEGIN****************************");
+//		System.out.println("\n\n****************************BEGIN****************************");
 		
 		crawler.run(seed);
 		
-		System.out.println("\n\n****************************END****************************");
+//		System.out.println("\n\n****************************END****************************");
 	}
 
 }

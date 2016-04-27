@@ -1,12 +1,9 @@
 package webCrawler;
 
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URL;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.concurrent.BlockingQueue;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -26,25 +23,57 @@ import crawlercommons.robots.SimpleRobotRulesParser;
  * @author Wendi
  *
  */
-public class CrawlerWorker {
+public class CrawlerWorker extends Thread {
 	// use a fake USER_AGENT so the web server thinks the robot is a normal web browser
 	private static final String USER_AGENT = 
 			"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
 	
-	private List<String> links = new LinkedList<String>(); // a list of URLs
-	
+
+
+	private BlockingQueue<Url> bq;
+	private int urlId = 0;
+	UrlManager urlManager;
+	ReportManager reportManager;
+	Crawler crawlManager;
+	public CrawlerWorker(BlockingQueue<Url> bq, String threadName, UrlManager urlManager, ReportManager reportManager, Crawler crawlManager){
+		this.bq = bq;
+		setName(threadName);
+		this.urlManager = urlManager;
+		this.reportManager = reportManager;
+		this.crawlManager = crawlManager;
+	}
+
+	@Override
+	public void run() {
+		try {
+			while(!bq.isEmpty()) {
+				synchronized (this.crawlManager) {
+					crawl();
+				}
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
 	 * 1. makes an HTTP request, checks the response and collects all the links on that page.
 	 * 2. Collect words after the successful crawl.
-	 * @param nextURL
 	 * @return whether of not the crawl was successful
 	 * @throws Exception 
 	 */
-	public boolean crawl(String url, int fileId) throws Exception {
-		if (!isAllowed(url)) { 
+//	public boolean crawl(String url, int fileId) throws Exception {
+	public synchronized boolean crawl() throws Exception {
+		Url urlObj = getUrl();
+		System.out.println("\n" + this.getName() + " getUrl: " + urlObj.url + " urlId:" + urlObj.urlId);
+		System.out.println("inside crawl");
+		String url  = urlObj.url;
+		if (!isAllowed(url)) {
 			return false;
 		}
 		try {
+			System.out.println("**Visiting**");
 			Connection.Response response = Jsoup.connect(url)
 												.userAgent(USER_AGENT)
 												.timeout(100000)
@@ -58,8 +87,7 @@ public class CrawlerWorker {
 			int numofLinks = -1;
 			int numofImages = -1;
 			if (statusCode == 200) {  // 200 is the HTTP OK status code
-				System.out.println("**Visiting**\nReceived web page: " + url);
-				
+
 				if (!response.contentType().contains("text/html")) {
 					System.out.println("**Failure**\nRetrieved something other than HTML");
 					return false;
@@ -67,7 +95,8 @@ public class CrawlerWorker {
 				
 				
 				System.out.println("title: " + title);
-				
+
+//				ArrayList<String> links = new ArrayList<String>(); // a list of URLs
 				Elements linksOnPage = htmlDocument.select("a[href]");
 				numofLinks = linksOnPage.size();
 				System.out.println("Found (" + linksOnPage.size() + ") links");
@@ -75,17 +104,19 @@ public class CrawlerWorker {
 				for (Element link: linksOnPage) {
 					String crawledUrl = link.absUrl("href");
 					if (!crawledUrl.isEmpty()) {
-						this.links.add(crawledUrl);
+//						links.add(crawledUrl);
+						addUrl(crawledUrl);
 					}
 				}
-				
+				System.out.println(bq.toString());
+
 				Elements imagesOnPage = htmlDocument.select("img");
 				numofImages = imagesOnPage.size();	
 				
 				int bodySize = response.bodyAsBytes().length;
 				
 				// check duplicate
-				if (PageFilter.contain(title, numofLinks, numofImages, bodySize)) {		
+				if (PageFilter.contain(title, numofLinks, numofImages, bodySize)) {
 					return true;
 				}
 				else {
@@ -93,12 +124,15 @@ public class CrawlerWorker {
 				}
 				
 				// save pages info as html
-				generateHtmlFile(fileId, htmlDocument); 
+				generateHtmlFile(urlObj.urlId, htmlDocument);
 			}
 			
 
 			// save pages info in report
-			Report.save(fileId, title, url, statusCode, numofLinks, numofImages);
+//			synchronized (this.reportManager) {
+			System.out.println("calling reportM");
+				reportManager.save(urlObj.urlId, title, url, statusCode, numofLinks, numofImages);
+//			}
 			return true;
 		}
 		catch (IOException ioe) {  // not successful in HTTP request
@@ -107,7 +141,11 @@ public class CrawlerWorker {
 			System.out.println(ioe.getLocalizedMessage());
 			return false;
 		}
-		
+		catch (Exception e) {  // not successful in HTTP request
+			e.printStackTrace();
+			return false;
+		}
+
 	}
 	
 	
@@ -141,20 +179,20 @@ public class CrawlerWorker {
 	}
 	
 	
-	/**
-	 * return a list of all the URLs on the pages
-	 * @return list
-	 */
-	public List<String> getLinks() {
-//		List<String> list = new LinkedList<String>();
-		return this.links;
-	}
+//	/*false*
+//	 * return a list of all the URLs on the pages
+//	 * @return list
+//	 */
+//	public List<String> getLinks() {
+////		List<String> list = new LinkedList<String>();
+//		return this.links;
+//	}
 	
 	
 	/**
 	 * generate html file for each page in directory
-	 * @param url
 	 * @param fileId
+	 * @param htmlDocument
 	 */
 	public void generateHtmlFile(int fileId, Document htmlDocument) {
 		try {
@@ -166,6 +204,43 @@ public class CrawlerWorker {
         } catch (IOException e) {
 			e.printStackTrace();
 		} 
+	}
+
+	public Url getUrl() {
+		Url url = null;
+		while(true) {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			try {
+				url = bq.take();
+				if (url != null && url.url.length() != 0) {
+//					System.out.println(this.getName() + " getUrl: " + url.url + " urlId:" + url.urlId);
+					break;
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		return url;
+	}
+
+	public void addUrl(String urlStr) {
+        try {
+            int urlId;
+//            synchronized (this.urlManager) {
+                this.urlManager.increaseUrlId();
+                urlId = this.urlManager.getUrlId();
+//            }
+            Url url = new Url(urlStr, urlId);
+            bq.put(url);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 	}
 	
 	

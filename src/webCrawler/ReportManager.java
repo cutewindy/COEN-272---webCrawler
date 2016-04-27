@@ -8,15 +8,7 @@ import java.util.Set;
 
 import javax.swing.text.html.HTMLDocument.Iterator;
 
-public class Report {
-	
-	private static int currUrlId = 0;
-//	private static HashMap<Integer, String> map = new HashMap<Integer, String>();
-	 
-	public static int getCurrUrlId() {
-		currUrlId++;
-		return currUrlId;
-	}
+public class ReportManager {
 	
 	public static void save(
 			int fileId,
@@ -25,6 +17,7 @@ public class Report {
 			int statusCode, 
 			int numofLinks,
 			int numofImages) {
+		System.out.println("inside reportmanager");
 		
 		try {
 	    	FileWriter fileWriter = new FileWriter(Main.REPORT, true); // false - overwrite; true - append
