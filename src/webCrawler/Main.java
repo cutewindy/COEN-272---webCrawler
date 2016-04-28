@@ -5,8 +5,11 @@ public class Main {
 	public static final String REPORT = "report.html";
 	public static final String PROCESSED_REPO = "processed_repository";
 
+	public static final int MAX_PAGE_TO_SEARCH = 10;
+	public static final int WORKER_NUM = 4;
+
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 		// TODO Auto-generated method stub
 		Utils.createDir(REPO);
 		Utils.createFile(REPORT);
@@ -16,11 +19,8 @@ public class Main {
 		String seed = "https://www.scu.edu/";
 //		String seed = "https://www.scu.edu/abc"; // 404 testing
 		System.out.println("Seed: " + seed);
-		System.out.println("\n\n****************************BEGIN****************************");
-		
+
 		crawler.run(seed);
-		
-		System.out.println("\n\n****************************END****************************");
 	}
 
 }

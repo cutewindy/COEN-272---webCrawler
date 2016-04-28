@@ -6,7 +6,13 @@
 .settings
 
 bin
+
 *.html
 
-
 *.txt
+
+.idea
+
+*.iml
+
+*.class
