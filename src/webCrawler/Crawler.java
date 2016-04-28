@@ -31,6 +31,7 @@ public class Crawler {
 		// init bq
 		ArrayBlockingQueue<Url> bq = new ArrayBlockingQueue<Url>(1000000);
 		bq.put(new Url(seedUrl, 0));
+		urlManager.visitedUrls.add(seedUrl);
 
 		// init workers
 		ArrayList<CrawlerWorker> workers = new ArrayList<CrawlerWorker>();
@@ -45,6 +46,11 @@ public class Crawler {
 		// run workers
 		for (int i = 0; i < Main.WORKER_NUM; i++) {
 			workers.get(i).start();
+		}
+		
+		// stop workers
+		for (int i = 0; i < Main.WORKER_NUM; i++) {
+			workers.get(i).join();
 		}
 	}
 }

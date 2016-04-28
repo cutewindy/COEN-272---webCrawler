@@ -5,14 +5,14 @@ import java.io.IOException;
 
 public class ReportManager {
 	
-	public static void save(
+	public void save(
 			int fileId,
 			String title, 
 			String url, 
 			int statusCode, 
 			int numofLinks,
 			int numofImages) {
-
+		
 		try {
 	    	FileWriter fileWriter = new FileWriter(Main.REPORT, true); // false - overwrite; true - append
 //	    	<a href="url">title</a>

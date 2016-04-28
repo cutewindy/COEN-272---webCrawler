@@ -65,7 +65,7 @@ public class CrawlerWorker extends Thread {
             bq = null;
             return false;
         }
-		System.out.println("\n" + this.getName() + " getUrl: " + urlObj.url + " urlId:" + urlObj.urlId);
+		System.out.println("\n" + this.getName() + "\ngetUrl: " + urlObj.url + "\nurlId:" + urlObj.urlId);
 		String url  = urlObj.url;
 		if (!isAllowed(url)) {
 			return false;
@@ -185,6 +185,16 @@ public class CrawlerWorker extends Thread {
         	fileWriter.write(htmlDocument.toString());
         	fileWriter.close();
         	
+        	// Lifen: remove some tags, and convert other tags into <>
+        	String fileNameChange = String.format("%s/%d.txt", Main.PROCESSED_REPO, fileId);   
+        	FileWriter fileWriterChange = new FileWriter(fileNameChange, false);    
+        	htmlDocument.select("script").remove(); 
+        	htmlDocument.select("link").remove(); 
+        	htmlDocument.select("footer").remove(); 
+        	String contentChange = htmlDocument.toString().replaceAll("<[^>]*>", "<> ");   // use "<> ", putting a space after <>
+        	fileWriterChange.write(contentChange);
+        	fileWriterChange.close();
+        	
         } catch (IOException e) {
 			e.printStackTrace();
 		} 
@@ -194,13 +204,16 @@ public class CrawlerWorker extends Thread {
 		Url url = null;
 		while(true) {
 			try {
-				Thread.sleep(500);
+				Thread.sleep(5);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			try {
+				url = null;
 				url = bq.take();
+				if (urlManager.visitedUrls.contains(url)) continue;
 				if (url != null && url.url.length() != 0) {
+					urlManager.visitedUrls.add(url.url);
 					break;
 				}
 			} catch (InterruptedException e) {
