@@ -2,11 +2,6 @@ package webCrawler;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javax.swing.text.html.HTMLDocument.Iterator;
 
 public class ReportManager {
 	
@@ -17,8 +12,7 @@ public class ReportManager {
 			int statusCode, 
 			int numofLinks,
 			int numofImages) {
-		System.out.println("inside reportmanager");
-		
+
 		try {
 	    	FileWriter fileWriter = new FileWriter(Main.REPORT, true); // false - overwrite; true - append
 //	    	<a href="url">title</a>

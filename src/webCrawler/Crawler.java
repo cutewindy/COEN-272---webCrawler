@@ -17,9 +17,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class Crawler {
 	
-	
-//	private static final int MAX_PAGE_TO_SEARCH = 10000;
-	public static final int WORKER_NUM = 4;
 
 	/**
 	 * Create CrawlerLeg to crawl the web page and collect all the links on that page
@@ -37,7 +34,7 @@ public class Crawler {
 
 		// init workers
 		ArrayList<CrawlerWorker> workers = new ArrayList<CrawlerWorker>();
-		for (int i = 0; i < WORKER_NUM; i++) {
+		for (int i = 0; i < Main.WORKER_NUM; i++) {
 			workers.add(new CrawlerWorker(bq,
 					                      "worker " + Integer.toString(i),
 										  urlManager,
@@ -46,7 +43,7 @@ public class Crawler {
 		}
 
 		// run workers
-		for (int i = 0; i < WORKER_NUM; i++) {
+		for (int i = 0; i < Main.WORKER_NUM; i++) {
 			workers.get(i).start();
 		}
 	}

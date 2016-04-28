@@ -5,6 +5,9 @@ public class Main {
 	public static final String REPORT = "report.html";
 	public static final String PROCESSED_REPO = "processed_repository";
 
+	public static final int MAX_PAGE_TO_SEARCH = 10;
+	public static final int WORKER_NUM = 4;
+
 	
 	public static void main(String[] args) throws InterruptedException {
 		// TODO Auto-generated method stub

@@ -43,11 +43,10 @@ public class CrawlerWorker extends Thread {
 	@Override
 	public void run() {
 		try {
-			while(!bq.isEmpty()) {
+			while(bq != null && !bq.isEmpty()) {
 				synchronized (this.crawlManager) {
 					crawl();
 				}
-
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -62,8 +61,11 @@ public class CrawlerWorker extends Thread {
 	 */
 	public synchronized boolean crawl() throws Exception {
 		Url urlObj = getUrl();
+        if (urlObj.urlId > Main.MAX_PAGE_TO_SEARCH) {
+            bq = null;
+            return false;
+        }
 		System.out.println("\n" + this.getName() + " getUrl: " + urlObj.url + " urlId:" + urlObj.urlId);
-		System.out.println("inside crawl");
 		String url  = urlObj.url;
 		if (!isAllowed(url)) {
 			return false;
@@ -102,7 +104,7 @@ public class CrawlerWorker extends Thread {
 						addUrl(crawledUrl);
 					}
 				}
-//				System.out.println(bq.toString());
+//				System.out.println(bq.toString()); // debug bq
 
 				Elements imagesOnPage = htmlDocument.select("img");
 				numofImages = imagesOnPage.size();	
