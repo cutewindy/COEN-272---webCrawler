@@ -28,10 +28,7 @@ public class CrawlerWorker extends Thread {
 	private static final String USER_AGENT = 
 			"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
 	
-
-
 	private BlockingQueue<Url> bq;
-	private int urlId = 0;
 	UrlManager urlManager;
 	ReportManager reportManager;
 	Crawler crawlManager;
@@ -63,7 +60,6 @@ public class CrawlerWorker extends Thread {
 	 * @return whether of not the crawl was successful
 	 * @throws Exception 
 	 */
-//	public boolean crawl(String url, int fileId) throws Exception {
 	public synchronized boolean crawl() throws Exception {
 		Url urlObj = getUrl();
 		System.out.println("\n" + this.getName() + " getUrl: " + urlObj.url + " urlId:" + urlObj.urlId);
@@ -96,7 +92,6 @@ public class CrawlerWorker extends Thread {
 				
 				System.out.println("title: " + title);
 
-//				ArrayList<String> links = new ArrayList<String>(); // a list of URLs
 				Elements linksOnPage = htmlDocument.select("a[href]");
 				numofLinks = linksOnPage.size();
 				System.out.println("Found (" + linksOnPage.size() + ") links");
@@ -104,11 +99,10 @@ public class CrawlerWorker extends Thread {
 				for (Element link: linksOnPage) {
 					String crawledUrl = link.absUrl("href");
 					if (!crawledUrl.isEmpty()) {
-//						links.add(crawledUrl);
 						addUrl(crawledUrl);
 					}
 				}
-				System.out.println(bq.toString());
+//				System.out.println(bq.toString());
 
 				Elements imagesOnPage = htmlDocument.select("img");
 				numofImages = imagesOnPage.size();	
@@ -129,10 +123,7 @@ public class CrawlerWorker extends Thread {
 			
 
 			// save pages info in report
-//			synchronized (this.reportManager) {
-			System.out.println("calling reportM");
-				reportManager.save(urlObj.urlId, title, url, statusCode, numofLinks, numofImages);
-//			}
+            reportManager.save(urlObj.urlId, title, url, statusCode, numofLinks, numofImages);
 			return true;
 		}
 		catch (IOException ioe) {  // not successful in HTTP request
@@ -179,16 +170,7 @@ public class CrawlerWorker extends Thread {
 	}
 	
 	
-//	/*false*
-//	 * return a list of all the URLs on the pages
-//	 * @return list
-//	 */
-//	public List<String> getLinks() {
-////		List<String> list = new LinkedList<String>();
-//		return this.links;
-//	}
-	
-	
+
 	/**
 	 * generate html file for each page in directory
 	 * @param fileId
@@ -217,7 +199,6 @@ public class CrawlerWorker extends Thread {
 			try {
 				url = bq.take();
 				if (url != null && url.url.length() != 0) {
-//					System.out.println(this.getName() + " getUrl: " + url.url + " urlId:" + url.urlId);
 					break;
 				}
 			} catch (InterruptedException e) {
@@ -230,10 +211,10 @@ public class CrawlerWorker extends Thread {
 	public void addUrl(String urlStr) {
         try {
             int urlId;
-//            synchronized (this.urlManager) {
-                this.urlManager.increaseUrlId();
-                urlId = this.urlManager.getUrlId();
-//            }
+
+            this.urlManager.increaseUrlId();
+            urlId = this.urlManager.getUrlId();
+
             Url url = new Url(urlStr, urlId);
             bq.put(url);
         } catch (InterruptedException e) {

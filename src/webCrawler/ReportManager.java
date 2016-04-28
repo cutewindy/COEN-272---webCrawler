@@ -44,22 +44,5 @@ public class ReportManager {
 		} 
 		
 	}
-	
-//	public static void show() {
-//		System.out.println("Report:");
-//		Set<Entry<Integer, String>> hashSet=map.entrySet();
-//        for(Entry entry:hashSet ) {
-//            System.out.println("Key="+entry.getKey()+", Value="+entry.getValue());
-//        }
-//        System.out.println("-----------------------------");
-//        // Print the size of hashMap
-//         System.out.println("HashMap size="+map.size());
-//
-//	}
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
-	}
 
 }

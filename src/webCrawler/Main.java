@@ -16,11 +16,8 @@ public class Main {
 		String seed = "https://www.scu.edu/";
 //		String seed = "https://www.scu.edu/abc"; // 404 testing
 		System.out.println("Seed: " + seed);
-//		System.out.println("\n\n****************************BEGIN****************************");
-		
+
 		crawler.run(seed);
-		
-//		System.out.println("\n\n****************************END****************************");
 	}
 
 }
