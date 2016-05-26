@@ -1,8 +1,9 @@
 # COEN-272---webCrawler
 
 ##Highlights
- - Crawlers - multi-threaded
+ - input => seed url, output => word stats/rank from processed crawled web pages
+ - Crawlers - BFS, BlockingQueue, Multi-threaded
  - URL filtering - Bloom Filter (TODO)
  - Page filtering - SimHash (TODO)
- - Remove noise - Tag/Token counts
- - Word statistics - Zipf's law
+ - Information retrieval - Tag/Token counts
+ - Word stats/rank - Zipf's law
